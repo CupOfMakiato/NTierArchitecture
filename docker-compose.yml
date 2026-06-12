@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  ntierarchitecture-db:
+    image: postgres:16
+    container_name: ntierarchitecture-db
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: NTierArchitecture
+    ports:
+      - "5432:5432"
+    volumes:
+      - ntierarchitecture-db-data:/var/lib/postgresql/data
+  ntierarchitecture-cache:
+    image: redis:7-alpine
+    container_name: ntierarchitecture-cache
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ntierarchitecture-redis-data:/data
+volumes:
+  pgdata:
+  ntierarchitecture-db-data:
+  ntierarchitecture-redis-data:
