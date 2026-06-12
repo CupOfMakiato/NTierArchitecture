@@ -20,16 +20,19 @@ namespace NTierArchitecture.Application.Utils
         private readonly IConfiguration _configuration;
         private readonly IRedisService _redisService;
         private readonly ICurrentTime _currentTime;
+        private readonly IEncryptionService _encryptionService;
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
 
         public TokenGenerators(
             IConfiguration configuration,
             IRedisService redisService,
-            ICurrentTime currentTime)
+            ICurrentTime currentTime,
+            IEncryptionService encryptionService)
         {
             _configuration = configuration;
             _redisService = redisService;
             _currentTime = currentTime;
+            _encryptionService = encryptionService;
         }
 
         public async Task<JwtTokenResult> GenerateAndStoreTokensAsync(User user, string roleName)
@@ -46,16 +49,17 @@ namespace NTierArchitecture.Application.Utils
             var refreshTokenId = Guid.NewGuid().ToString("N");
             var accessTokenExpiresAt = now.AddMinutes(settings.AccessTokenExpirationMinutes);
             var refreshTokenExpiresAt = now.AddDays(settings.RefreshTokenExpirationDays);
+            var email = _encryptionService.Decrypt(user.Email);
 
             var accessToken = CreateToken(
                 settings,
-                BuildClaims(user, roleName, sessionId, accessTokenId, AccessTokenType),
+                BuildClaims(user, email, roleName, sessionId, accessTokenId, AccessTokenType),
                 now,
                 accessTokenExpiresAt);
 
             var refreshToken = CreateToken(
                 settings,
-                BuildClaims(user, roleName, sessionId, refreshTokenId, RefreshTokenType),
+                BuildClaims(user, email, roleName, sessionId, refreshTokenId, RefreshTokenType),
                 now,
                 refreshTokenExpiresAt);
 
@@ -63,7 +67,7 @@ namespace NTierArchitecture.Application.Utils
             {
                 UserId = user.Id,
                 UserName = user.UserName,
-                Email = user.Email,
+                Email = email,
                 RoleName = roleName,
                 SessionId = sessionId,
                 AccessTokenId = accessTokenId,
@@ -151,6 +155,7 @@ namespace NTierArchitecture.Application.Utils
 
         private IEnumerable<Claim> BuildClaims(
             User user,
+            string email,
             string roleName,
             string sessionId,
             string tokenId,
@@ -164,7 +169,7 @@ namespace NTierArchitecture.Application.Utils
                 new Claim(TokenTypeClaim, tokenType),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, roleName)
             };
         }

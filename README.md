@@ -10,6 +10,7 @@ This repository is a base ASP.NET Core project for starting future backend APIs.
 - Role-based authorization policies
 - EF Core with PostgreSQL.
 - BCrypt password hashing.
+- AES-GCM encryption for stored user email values.
 - SignalR notification hub foundation.
 - Basic performance logging, rate limiting, and global exception middleware.
 
@@ -34,7 +35,7 @@ NTierArchitecture/
     IServices/            Service contracts
     Mappers/              AutoMapper profiles
     Services/             Business/application services
-    Settings/             Strongly typed settings models
+    Settings/             Strongly typed settings models such as JWT, Cloudinary, and encryption
     Utils/                Utility helpers
 
   NTierArchitecture.Domain/
@@ -45,6 +46,7 @@ NTierArchitecture/
     Database/             EF Core DbContext
     Hubs/                 SignalR hub implementation
     Repositories/         EF Core repository implementations
+    Services/             Infrastructure service implementations such as AES encryption
     Migrations/           EF Core migrations
     UnitOfWork.cs         Unit of Work implementation
 ```
@@ -59,8 +61,8 @@ API -> Infrastructure -> Application -> Domain
 ```
 
 - `Domain` contains core entities and enums. It should stay framework-light.
-- `Application` contains DTOs, interfaces, business services, mapping, and use-case logic.
-- `Infrastructure` implements persistence, Redis, Cloudinary, SignalR, and other external integrations.
+- `Application` contains DTOs, interfaces, business services, mapping, use-case logic, and encryption service contracts.
+- `Infrastructure` implements persistence, Redis, Cloudinary, SignalR, AES encryption, and other external integrations.
 - `API` wires dependency injection, middleware, authentication, Swagger, and controllers.
 
 When adding features, prefer putting business rules in `Application`, storage details in `Infrastructure`, and HTTP-only concerns in `API`.
@@ -90,6 +92,7 @@ Required settings:
 - `CloudinarySetting:ApiKey`
 - `CloudinarySetting:ApiSecret`
 - `CloudinarySetting:Folder`
+- `EncryptionSettings:AesKey` as a base64-encoded 32-byte AES key
 
 Do not commit real production secrets.
 

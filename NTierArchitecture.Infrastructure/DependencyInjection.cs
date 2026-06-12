@@ -5,9 +5,11 @@ using NTierArchitecture.Application;
 using NTierArchitecture.Application.IRepositories;
 using NTierArchitecture.Application.IServices;
 using NTierArchitecture.Application.Services;
+using NTierArchitecture.Application.Settings;
 using NTierArchitecture.Application.Settings.CloudinaryService;
 using NTierArchitecture.Infrastructure.Database;
 using NTierArchitecture.Infrastructure.Repositories;
+using NTierArchitecture.Infrastructure.Services;
 using StackExchange.Redis;
 
 namespace NTierArchitecture.Infrastructure
@@ -25,6 +27,7 @@ namespace NTierArchitecture.Infrastructure
 
             services.AddScoped<IRedisService, RedisService>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddSingleton<IEncryptionService, AesEncryptionService>();
 
             services.AddMemoryCache();
             services.AddLogging();
@@ -35,6 +38,10 @@ namespace NTierArchitecture.Infrastructure
 
             // Cloudinary
             services.Configure<CloudinarySetting>(configuration.GetSection("CloudinarySetting"));
+
+            // AES Encryption
+            services.Configure<EncryptionSettings>(
+                configuration.GetSection(EncryptionSettings.SectionName));
 
             // Database Postgres
             services.AddDbContext<AppDbContext>(options =>

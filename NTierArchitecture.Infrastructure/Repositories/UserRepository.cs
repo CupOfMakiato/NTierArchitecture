@@ -10,14 +10,17 @@ namespace NTierArchitecture.Infrastructure.Repositories
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
         private readonly AppDbContext _dbContext;
+        private readonly IEncryptionService _encryptionService;
 
         public UserRepository(
             AppDbContext dbContext,
             ICurrentTime timeService,
-            IClaimService claimsService)
+            IClaimService claimsService,
+            IEncryptionService encryptionService)
             : base(dbContext, timeService, claimsService)
         {
             _dbContext = dbContext;
+            _encryptionService = encryptionService;
         }
 
         public Task<List<User>> GetAllUser()
@@ -34,22 +37,26 @@ namespace NTierArchitecture.Infrastructure.Repositories
                 .FirstOrDefaultAsync(user => user.Id == id);
         }
 
-        public Task<User?> GetByEmailAsync(string email)
+        public async Task<User?> GetByEmailAsync(string email)
         {
-            var normalizedValue = email.Trim().ToLower();
+            var normalizedValue = NormalizeEmail(email);
 
-            return _dbContext.User
+            var users = await _dbContext.User
                 .Include(user => user.Role)
-                .FirstOrDefaultAsync(user =>
-                    user.Email.ToLower() == normalizedValue);
+                .ToListAsync();
+
+            return users.FirstOrDefault(user =>
+                NormalizeEmail(_encryptionService.Decrypt(user.Email)) == normalizedValue);
         }
 
-        public Task<bool> IsEmailTakenAsync(string email)
+        public async Task<bool> IsEmailTakenAsync(string email)
         {
-            var normalizedEmail = email.Trim().ToLower();
+            var normalizedEmail = NormalizeEmail(email);
 
-            return _dbContext.User.AnyAsync(user =>
-                user.Email.ToLower() == normalizedEmail);
+            var users = await _dbContext.User.ToListAsync();
+
+            return users.Any(user =>
+                NormalizeEmail(_encryptionService.Decrypt(user.Email)) == normalizedEmail);
         }
 
         public Task<Role?> GetRoleByIdAsync(int roleId)
@@ -61,6 +68,11 @@ namespace NTierArchitecture.Infrastructure.Repositories
         {
             var normalizedRoleName = roleName.Trim().ToLower();
             return _dbContext.Role.FirstOrDefaultAsync(role => role.RoleName.ToLower() == normalizedRoleName);
+        }
+
+        private static string NormalizeEmail(string email)
+        {
+            return email.Trim().ToLowerInvariant();
         }
     }
 }

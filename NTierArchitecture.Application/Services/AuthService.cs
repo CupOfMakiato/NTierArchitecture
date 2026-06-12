@@ -15,15 +15,18 @@ namespace NTierArchitecture.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtTokenService _jwtTokenService;
+        private readonly IEncryptionService _encryptionService;
 
         public AuthService(
             IUnitOfWork unitOfWork,
             IPasswordHasher passwordHasher,
-            IJwtTokenService jwtTokenService)
+            IJwtTokenService jwtTokenService,
+            IEncryptionService encryptionService)
         {
             _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
             _jwtTokenService = jwtTokenService;
+            _encryptionService = encryptionService;
         }
 
         public async Task<Result<AuthResult>> RegisterAsync(RegisterRequest request)
@@ -34,7 +37,7 @@ namespace NTierArchitecture.Application.Services
                 return Failed(validationError);
             }
 
-            var email = request.Email.Trim().ToLower();
+            var email = NormalizeEmail(request.Email);
             var userName = request.UserName.Trim();
             var isTaken = await _unitOfWork.UserRepository.IsEmailTakenAsync(email);
             if (isTaken)
@@ -52,7 +55,7 @@ namespace NTierArchitecture.Application.Services
             {
                 Id = Guid.NewGuid(),
                 UserName = userName,
-                Email = email,
+                Email = _encryptionService.Encrypt(email),
                 Password = _passwordHasher.HashPassword(request.Password),
                 RoleId = userRole.Id,
                 Status = UserStatus.Active
@@ -113,7 +116,7 @@ namespace NTierArchitecture.Application.Services
             };
         }
 
-        private static AuthResult BuildAuthResult(User user, string roleName, JwtTokenResult tokens)
+        private AuthResult BuildAuthResult(User user, string roleName, JwtTokenResult tokens)
         {
             return new AuthResult
             {
@@ -122,13 +125,18 @@ namespace NTierArchitecture.Application.Services
                 {
                     UserId = user.Id,
                     UserName = user.UserName,
-                    Email = user.Email,
+                    Email = _encryptionService.Decrypt(user.Email),
                     RoleName = roleName,
                     SessionId = tokens.SessionId,
                     AccessTokenExpiresAt = tokens.AccessTokenExpiresAt,
                     RefreshTokenExpiresAt = tokens.RefreshTokenExpiresAt
                 }
             };
+        }
+
+        private static string NormalizeEmail(string email)
+        {
+            return email.Trim().ToLowerInvariant();
         }
 
         private static string? ValidateRegisterRequest(RegisterRequest request)

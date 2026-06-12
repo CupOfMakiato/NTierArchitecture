@@ -19,14 +19,19 @@ namespace NTierArchitecture.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public UserService(IUserRepository userRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        private readonly IEncryptionService _encryptionService;
+
+        public UserService(
+            IUserRepository userRepository,
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor,
+            IEncryptionService encryptionService)
         {
             _userRepository = userRepository;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
+            _encryptionService = encryptionService;
         }
-
-
         public async Task<Result<UserDTO>> GetCurrentUserById()
         {
             var userIdValue = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -45,6 +50,7 @@ namespace NTierArchitecture.Application.Services
 
             // This should return success when user is found
             var userDto = _mapper.Map<UserDTO>(user);
+            userDto.Email = _encryptionService.Decrypt(user.Email);
             return new Result<UserDTO>
             {
                 Error = 0,
