@@ -7,6 +7,7 @@ using NTierArchitecture.Application.IServices;
 using NTierArchitecture.Application.Services;
 using NTierArchitecture.Application.Settings;
 using NTierArchitecture.Application.Settings.CloudinaryService;
+using NTierArchitecture.Application.Settings.MailjetService;
 using NTierArchitecture.Infrastructure.Database;
 using NTierArchitecture.Infrastructure.Repositories;
 using NTierArchitecture.Infrastructure.Services;
@@ -38,6 +39,10 @@ namespace NTierArchitecture.Infrastructure
 
             // Cloudinary
             services.Configure<CloudinarySetting>(configuration.GetSection("CloudinarySetting"));
+
+            // Email Provider - Mailjet
+            services.Configure<SentEmailSettings>(
+                configuration.GetSection(SentEmailSettings.SectionName));
 
             // AES Encryption
             services.Configure<EncryptionSettings>(

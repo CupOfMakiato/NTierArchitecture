@@ -5,8 +5,9 @@ namespace NTierArchitecture.Application.IServices
 {
     public interface IAuthService
     {
-        Task<Result<AuthResult>> RegisterAsync(RegisterRequest request);
-        Task<Result<AuthResult>> LoginAsync(LoginRequest request);
+        Task<Result<object>> RequestRegisterOtpAsync(RegisterRequest request);
+        Task<Result<AuthResult>> RequestLoginAsync(LoginRequest request);
+        Task<Result<AuthResult>> VerifyOtpAsync(VerifyOtpRequest request);
         Task<Result<object>> LogoutAsync(string sessionId);
     }
 }

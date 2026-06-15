@@ -27,17 +27,16 @@ namespace NTierArchitecture.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest request)
         {
-            var result = await _authService.RegisterAsync(request);
-            if (result.Error != 0 || result.Data == null)
+            var result = await _authService.RequestRegisterOtpAsync(request);
+            if (result.Error != 0)
             {
                 return BadRequest(result);
             }
 
-            //Response.AppendJwtTokenCookies(result.Data.Tokens, Request.IsHttps);
             return Ok(new
             {
                 Error = 0,
-                Message = "Register Successfully!"
+                Message = "OTP email verification sent."
             });
         }
 
@@ -45,19 +44,48 @@ namespace NTierArchitecture.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
-            var result = await _authService.LoginAsync(request);
-            if (result.Error != 0 || result.Data == null)
+            var result = await _authService.RequestLoginAsync(request);
+            if (result.Error != 0)
             {
                 return Unauthorized(result);
             }
 
-            // uncomment to debug token
-            // Response.AppendJwtAuthorizationHeader(result.Data.Tokens);
-            Response.AppendJwtTokenCookies(result.Data.Tokens, Request.IsHttps);
+            // return Ok(new
+            // {
+            //     Error = 0,
+            //     Message = "OTP email verification sent."
+            // });
+            if (result.Data != null)
+            {
+                Response.AppendJwtTokenCookies(result.Data.Tokens, Request.IsHttps);
+            }
+
             return Ok(new
             {
                 Error = 0,
-                Message = "Login Successfully!"
+                Message = result.Message
+            });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp(VerifyOtpRequest request)
+        {
+            var result = await _authService.VerifyOtpAsync(request);
+            if (result.Error != 0)
+            {
+                return BadRequest(result);
+            }
+
+            if (result.Data != null)
+            {
+                Response.AppendJwtTokenCookies(result.Data.Tokens, Request.IsHttps);
+            }
+
+            return Ok(new
+            {
+                Error = 0,
+                Message = result.Message
             });
         }
 

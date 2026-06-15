@@ -362,3 +362,4 @@ FodyWeavers.xsd
 /FourTierCleanArchitecture.Infrastructure/Migrations/AppDbContextModelSnapshot.cs
 /FourTierCleanArchitecture.API/appsettings.Development.json
 /NTierArchitecture.API/appsettings.Development.json
+**/.tmp-build-verify/

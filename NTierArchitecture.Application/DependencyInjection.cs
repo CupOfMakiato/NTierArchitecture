@@ -12,6 +12,7 @@ namespace NTierArchitecture.Application
         {
             services.AddSingleton<ICurrentTime, CurrentTime>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IJwtTokenService, TokenGenerators>();
